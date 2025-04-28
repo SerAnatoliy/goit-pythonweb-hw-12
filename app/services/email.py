@@ -10,9 +10,6 @@ MAILGUN_DOMAIN = os.getenv("MAILGUN_DOMAIN")
 MAILGUN_SENDER = os.getenv("MAILGUN_SENDER")
 
 def send_email(subject: str, to_email: str, body: str):
-    """
-    Надсилає email за допомогою Mailgun API.
-    """
     if not MAILGUN_API_KEY or not MAILGUN_DOMAIN or not MAILGUN_SENDER:
         raise ValueError("Mailgun API Key, Domain або Sender Email не налаштовані")
 
@@ -28,6 +25,6 @@ def send_email(subject: str, to_email: str, body: str):
     response = requests.post(url, auth=auth, data=data)
 
     if response.status_code == 200:
-        print(f"Email надіслано на {to_email}")
+        print(f"Email was sent {to_email}")
     else:
-        print(f"Помилка відправки email: {response.status_code}, {response.text}")
+        print(f"There is an error sending email: {response.status_code}, {response.text}")

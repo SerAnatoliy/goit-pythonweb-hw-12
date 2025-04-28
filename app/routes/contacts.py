@@ -1,5 +1,5 @@
 from datetime import date
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from app.database import crud, schemas
 from app.config import SessionLocal
@@ -15,7 +15,8 @@ def get_db():
     finally:
         db.close()
 
-@router.post("/", response_model=schemas.ContactResponse)
+
+@router.post("/", response_model=schemas.ContactResponse, status_code=status.HTTP_201_CREATED)
 def create_contact(
     contact: schemas.ContactCreate,
     db: Session = Depends(get_db),
@@ -41,16 +42,6 @@ def get_contact(
         raise HTTPException(status_code=404, detail="Contact not found")
     return db_contact
 
-@router.delete("/{contact_id}", response_model=schemas.ContactResponse)
-def delete_contact(
-    contact_id: int,
-    db: Session = Depends(get_db),
-    current_user: schemas.UserResponse = Depends(get_current_user)
-):
-    db_contact = crud.delete_contact(db, contact_id, current_user.id)
-    if db_contact is None:
-        raise HTTPException(status_code=404, detail="Contact not found")
-    return db_contact
 
 @router.put("/{contact_id}", response_model=schemas.ContactResponse)
 def update_contact(
@@ -64,6 +55,17 @@ def update_contact(
         raise HTTPException(status_code=404, detail="Contact not found")
     return db_contact
 
+
+@router.delete("/{contact_id}", response_model=schemas.ContactResponse)
+def delete_contact(
+    contact_id: int,
+    db: Session = Depends(get_db),
+    current_user: schemas.UserResponse = Depends(get_current_user)
+):
+    db_contact = crud.delete_contact(db, contact_id, current_user.id)
+    if db_contact is None:
+        raise HTTPException(status_code=404, detail="Contact not found")
+    return db_contact
 
 
 @router.get("/search/", response_model=list[schemas.ContactResponse])

@@ -1,0 +1,78 @@
+import uuid
+from app.services.auth import create_reset_token  # Для тесту з реальним токеном
+
+
+def test_signup_user(test_client):
+    unique_username = f"testuser_{uuid.uuid4().hex[:8]}"
+    unique_email = f"{unique_username}@example.com"
+
+    response = test_client.post("/users/signup/", json={
+        "username": unique_username,
+        "email": unique_email,
+        "password": "testpassword123"
+    })
+    assert response.status_code == 201
+    assert "email" in response.json()
+
+
+def test_login_user(test_client):
+    unique_username = f"testuser_{uuid.uuid4().hex[:8]}"
+    unique_email = f"{unique_username}@example.com"
+    password = "testpassword123"
+
+    signup_response = test_client.post("/users/signup/", json={
+        "username": unique_username,
+        "email": unique_email,
+        "password": password
+    })
+    assert signup_response.status_code == 201
+
+    login_response = test_client.post("/users/login/", data={
+        "username": unique_email,
+        "password": password
+    })
+    assert login_response.status_code == 200
+    assert "access_token" in login_response.json()
+
+
+def test_reset_password_flow(test_client):
+    unique_id = uuid.uuid4().hex[:8]
+    unique_email = f"user_{unique_id}@example.com"
+    unique_username = f"resetuser_{unique_id}"
+    password = "initialPassword123"
+
+    signup_response = test_client.post("/users/signup/", json={
+        "username": unique_username,
+        "email": unique_email,
+        "password": password
+    })
+    assert signup_response.status_code == 201
+
+    reset_request = test_client.post("/users/reset_password_request/", params={"email": unique_email})
+    assert reset_request.status_code == 200
+
+    token = create_reset_token(unique_email)
+
+    new_password = "newSecurePassword123"
+    reset_response = test_client.post("/users/reset_password/", params={
+        "token": token,
+        "new_password": new_password
+    })
+    assert reset_response.status_code == 200
+    assert "Password has been reset" in reset_response.json()["message"]
+
+    login_response = test_client.post("/users/login", data={
+        "username": unique_email,
+        "password": new_password
+    })
+    assert login_response.status_code == 200
+    assert "access_token" in login_response.json()
+
+
+def test_reset_password_invalid_token(test_client):
+    response = test_client.post("/users/reset_password/", params={
+        "token": "invalidtoken123",
+        "new_password": "whatever"
+    })
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Invalid or expired token"

@@ -6,9 +6,9 @@ services:
     container_name: postgres_db
     restart: always
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: contacts_db
     ports:
       - "5433:5432"
     volumes:
@@ -20,10 +20,18 @@ services:
     restart: always
     depends_on:
       - db
+      - redis
     ports:
       - "8000:8000"
     environment:
       DATABASE_URL: postgresql://postgres:mysecretpassword@db:5432/contacts_db
+      REDIS_URL: redis://redis:6379
+
+  redis:
+    image: redis
+    container_name: redis
+    ports:
+      - "6379:6379"
 
 volumes:
   pgdata:
